@@ -1,0 +1,18 @@
+builddir = build
+new_ninja_build = $builddir/build.ninja
+ninja_build = build.ninja
+backup_ninja_build = $builddir/build.backup.ninja
+base_ninja_build = build.base.ninja
+
+rule construct_new_build
+  command = tree -I build -f | grep \\.c | sed -r 's/.+\.\///' | xargs -i sh -c "echo 'build $builddir/{}: cc {}' >> $new_ninja_build && echo 'default $builddir/{}' >> $new_ninja_build"; mv $new_ninja_build $ninja_build
+rule cp_to_build
+  command = cp $in $out
+rule cc
+  command = cc $in -o $$(VAR="$out"; echo $${VAR%.c})
+build $new_ninja_build: cp_to_build $base_ninja_build 
+build $backup_ninja_build: cp_to_build $ninja_build
+build update_build: construct_new_build | $backup_ninja_build $new_ninja_build
+# targets below
+build build/chapter1/ex_1_1.c: cc chapter1/ex_1_1.c
+default build/chapter1/ex_1_1.c
